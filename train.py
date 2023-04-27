@@ -10,6 +10,9 @@ from torch.utils import data as torchdata
 from datasets import load_dataset, DatasetDict
 from transformers import AutoImageProcessor, AutoModelForObjectDetection
 
+import flor
+from flor import MTK as Flor
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 cppe5 = load_dataset("cppe-5")
@@ -30,6 +33,7 @@ model = AutoModelForObjectDetection.from_pretrained(
     label2id=label2id,
     ignore_mismatched_sizes=True,
 ).to(device)
+Flor.checkpoints(model)
 
 transform = albumentations.Compose(
     [
@@ -105,11 +109,12 @@ train_loader = torchdata.DataLoader(
 optimizer = torch.optim.AdamW(
     model.parameters(), lr=learning_rate, weight_decay=weight_decay
 )
+Flor.checkpoints(optimizer)
 
 total_step = len(train_loader)
-for epoch in range(num_epochs):
+for epoch in Flor.loop(range(num_epochs)):
     model.train()
-    for i, batch in enumerate(train_loader):
+    for i, batch in Flor.loop(enumerate(train_loader)):
         outputs = model(**batch)
         loss = outputs.loss
 
@@ -119,8 +124,10 @@ for epoch in range(num_epochs):
 
         print(
             "Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}".format(
-                epoch + 1, num_epochs, i, total_step, loss.item()
+                epoch + 1, num_epochs, i, total_step, flor.log("loss", loss.item())
             )
         )
+        if i > 9:
+            break
 
 print("Model TEST")
