@@ -99,10 +99,10 @@ def collate_fn(batch):
     return batch
 
 
-batch_size = 8
-num_epochs = 0
-learning_rate = 1e-5
-weight_decay = 1e-4
+batch_size = flor.arg("batch_size", 8)
+num_epochs = flor.arg("epochs", default=5)
+learning_rate = flor.arg("learning_rate", 1e-5)
+weight_decay = flor.arg("weight_decay", 1e-4)
 
 train_loader = torchdata.DataLoader(
     dataset=cppe5["train"].with_transform(transform_aug_ann),  # type: ignore
@@ -138,6 +138,7 @@ for epoch in Flor.loop(range(num_epochs)):
 
 print("Model TEST")
 
+
 # format annotations the same as for training, no need for data augmentation
 def val_formatted_anns(image_id, objects):
     annotations = []
@@ -164,7 +165,9 @@ def save_cppe5_annotation_file_images(cppe5):
         os.makedirs(path_output_cppe5)
 
     path_anno = os.path.join(path_output_cppe5, "cppe5_ann.json")
-    categories_json = [{"supercategory": "none", "id": id, "name": id2label[id]} for id in id2label]
+    categories_json = [
+        {"supercategory": "none", "id": id, "name": id2label[id]} for id in id2label
+    ]
     output_json["images"] = []
     output_json["annotations"] = []
     for example in cppe5:
@@ -203,7 +206,9 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # resizing + normalization of both image and target)
         image_id = self.ids[idx]
         target = {"image_id": image_id, "annotations": target}
-        encoding = self.feature_extractor(images=img, annotations=target, return_tensors="pt")
+        encoding = self.feature_extractor(
+            images=img, annotations=target, return_tensors="pt"
+        )
         pixel_values = encoding["pixel_values"].squeeze()  # remove batch dimension
         target = encoding["labels"][0]  # remove batch dimension
 
@@ -214,7 +219,7 @@ path_output_cppe5, path_anno = save_cppe5_annotation_file_images(cppe5["test"])
 test_ds_coco_format = CocoDetection(path_output_cppe5, image_processor, path_anno)
 
 module = evaluate.load("ybelkada/cocoevaluate", coco=test_ds_coco_format.coco)
-val_dataloader = torch.utils.data.DataLoader(
+val_dataloader = torch.utils.data.DataLoader(  # type: ignore
     test_ds_coco_format, batch_size=8, shuffle=False, collate_fn=collate_fn
 )
 
@@ -231,12 +236,15 @@ with torch.no_grad():
         # forward pass
         outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask)
 
-        orig_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
-        results = image_processor.post_process(outputs, orig_target_sizes)  # convert outputs of model to COCO api
+        orig_target_sizes = torch.stack(
+            [target["orig_size"] for target in labels], dim=0
+        )
+        results = image_processor.post_process(
+            outputs, orig_target_sizes
+        )  # convert outputs of model to COCO api
 
         module.add(prediction=results, reference=labels)
         del batch
         print("check")
 results = module.compute()
 print(results)
-
