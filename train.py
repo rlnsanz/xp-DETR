@@ -17,7 +17,7 @@ import torchvision
 import evaluate
 from tqdm import tqdm
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = flor.arg("device", default=torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
 cppe5 = load_dataset("cppe-5")
 assert isinstance(cppe5, DatasetDict)
