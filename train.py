@@ -132,8 +132,6 @@ for epoch in Flor.loop(range(num_epochs)):
                 epoch + 1, num_epochs, i, total_step, flor.log("loss", loss.item())
             )
         )
-        if i > 9:
-            break
 
 
 print("Model TEST")
