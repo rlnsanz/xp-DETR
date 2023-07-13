@@ -101,7 +101,7 @@ def collate_fn(batch):
 
 batch_size = flor.arg("batch_size", 8)
 num_epochs = flor.arg("epochs", default=5)
-learning_rate = flor.arg("learning_rate", 1e-5)
+learning_rate = flor.arg("lr", 1e-5)
 weight_decay = flor.arg("weight_decay", 1e-4)
 
 train_loader = torchdata.DataLoader(
