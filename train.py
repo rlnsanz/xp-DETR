@@ -224,6 +224,8 @@ val_dataloader = torch.utils.data.DataLoader(  # type: ignore
 model.eval()
 with torch.no_grad():
     for idx, batch in enumerate(tqdm(val_dataloader)):
+        if idx >= 1000:
+            break
         pixel_values = batch["pixel_values"]
         pixel_mask = batch["pixel_mask"]
 
